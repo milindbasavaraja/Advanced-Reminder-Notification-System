@@ -1,44 +1,37 @@
 package org.nyu.java.project.reminderregister.entity;
 
 
-
-import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.UUID;
 
-@Entity
-@Table(name = "reminders")
+
 public class ReminderEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column( length = 10)
+
     private Integer reminderId;
 
-    @Column(nullable = false)
+
     private String reminderName;
 
-    @Column(nullable = false)
+
     private String reminderWay;
 
-    @Column(nullable = false)
+
     private LocalDate reminderDate;
 
-    @Column(nullable = false)
+
     private LocalTime reminderTime;
 
-    @Column(nullable = false, length = 500)
+
     private String reminderDescription;
 
-    @Column
+
     private Boolean isExpired;
 
-    @Column(nullable = false)
+
     private String reminderToEvent;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;
+
+    private Long userId;
 
     public ReminderEntity() {
     }
@@ -109,12 +102,12 @@ public class ReminderEntity {
         this.reminderDescription = reminderDescription;
     }
 
-    public User getUser() {
-        return user;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Boolean getExpired() {
@@ -134,7 +127,7 @@ public class ReminderEntity {
                 ", reminderTime=" + reminderTime +
                 ", reminderDescription='" + reminderDescription + '\'' +
                 ", isExpired=" + isExpired +
-                ", user=" + user +
+                ", user=" + userId +
                 '}';
     }
 }

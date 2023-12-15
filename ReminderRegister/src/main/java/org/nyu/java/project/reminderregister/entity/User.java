@@ -1,56 +1,48 @@
 package org.nyu.java.project.reminderregister.entity;
 
 
+import java.util.Objects;
 
-import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
-@Entity
-@Table(name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "userName"),
-                @UniqueConstraint(columnNames = "email")
-        })
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Long id;
 
-    @NotBlank
-    @Size(max = 20)
+
     private String username;
 
-    @NotBlank
-    @Size(max = 50)
-    @Email
+
     private String email;
 
-    @NotBlank
-    @Size(max = 120)
+
     private String password;
 
     private String otp;
     private Long otpRequestedTime;
     private boolean isEmailVerified;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>();
+    private String role;
+
 
     public User() {
     }
+
 
     public User(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.isEmailVerified = false;
+
+    }
+
+    public User(String username, String email, String password, String otp, Long otpRequestedTime, boolean isEmailVerified, String role) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.otp = otp;
+        this.otpRequestedTime = otpRequestedTime;
+        this.isEmailVerified = isEmailVerified;
+        this.role = role;
     }
 
     public Long getId() {
@@ -85,12 +77,12 @@ public class User {
         this.password = password;
     }
 
-    public Set<Role> getRoles() {
-        return roles;
+    public String getRoles() {
+        return role;
     }
 
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+    public void setRoles(String roles) {
+        this.role = roles;
     }
 
     public String getOtp() {
@@ -115,5 +107,33 @@ public class User {
 
     public void setEmailVerified(boolean emailVerified) {
         isEmailVerified = emailVerified;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(username, user.username) &&
+                Objects.equals(email, user.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, email);
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", otp='" + otp + '\'' +
+                ", otpRequestedTime=" + otpRequestedTime +
+                ", isEmailVerified=" + isEmailVerified +
+                ", roles=" + role +
+                '}';
     }
 }

@@ -1,28 +1,25 @@
 package org.nyu.java.project.reminderregister.controller;
 
+import org.nyu.java.project.reminderregister.dao.ReminderDao;
+import org.nyu.java.project.reminderregister.dao.UserDao;
 import org.nyu.java.project.reminderregister.entity.ReminderEntity;
 import org.nyu.java.project.reminderregister.entity.User;
+import org.nyu.java.project.reminderregister.exception.ReminderNotFoundException;
 import org.nyu.java.project.reminderregister.model.request.ReminderCreationRequest;
 import org.nyu.java.project.reminderregister.model.request.ReminderUpdateRequest;
 import org.nyu.java.project.reminderregister.model.response.MessageResponse;
 import org.nyu.java.project.reminderregister.model.response.ReminderResponse;
 import org.nyu.java.project.reminderregister.model.response.UserInfoResponse;
-import org.nyu.java.project.reminderregister.repository.ReminderRepository;
-import org.nyu.java.project.reminderregister.repository.UserRepository;
 import org.nyu.java.project.reminderregister.security.jwt.JwtUtils;
-import org.nyu.java.project.reminderregister.service.ReminderPollingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.EntityNotFoundException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,38 +30,20 @@ public class ReminderController {
 
     private Logger logger = LoggerFactory.getLogger(ReminderController.class);
 
-    @Autowired
-    private ReminderPollingService reminderPollingService;
+    /*@Autowired
+    private ReminderPollingService reminderPollingService;*/
 
     @Autowired
     private JwtUtils jwtUtils;
 
     @Autowired
-    private ReminderRepository reminderRepository;
+    private UserDao userDao;
 
     @Autowired
-    private UserRepository userRepository;
+    private ReminderDao reminderDao;
 
-
-    @GetMapping("/all")
-    public String allAccess() {
-        return "Public Content.";
-    }
-
-    @GetMapping("/user")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public String userAccess() {
-        return "User Content.";
-    }
-
-    @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String adminAccess() {
-        return "Admin Board.";
-    }
 
     @GetMapping("/validate-jwt")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> validateJwT(@RequestHeader("Authorization") String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -78,11 +57,11 @@ public class ReminderController {
                 userName = jwtUtils.getUserNameFromJwtToken(token);
             }
 
-            User user = userRepository.findByUsername(userName)
+            User user = userDao.findUserByUsername(userName)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            UserInfoResponse userInfoResponse = new UserInfoResponse(user.getId(),user.getUsername(),user.getEmail(), Collections.EMPTY_LIST);
-            return ResponseEntity.ok(new MessageResponse("User Logged In", isValid,userInfoResponse));
+            UserInfoResponse userInfoResponse = new UserInfoResponse(user.getId(), user.getUsername(), user.getEmail(), Collections.EMPTY_LIST);
+            return ResponseEntity.ok(new MessageResponse("User Logged In", isValid, userInfoResponse));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse(false));
@@ -90,7 +69,6 @@ public class ReminderController {
     }
 
     @GetMapping("/retrieve-username")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> retreiveUserName(@RequestHeader("Authorization") String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -105,10 +83,10 @@ public class ReminderController {
                 userName = jwtUtils.getUserNameFromJwtToken(token);
             }
 
-            User user = userRepository.findByUsername(userName)
+            User user = userDao.findUserByUsername(userName)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            UserInfoResponse userInfoResponse = new UserInfoResponse(user.getId(),user.getUsername(),user.getEmail(), Collections.EMPTY_LIST);
+            UserInfoResponse userInfoResponse = new UserInfoResponse(user.getId(), user.getUsername(), user.getEmail(), Collections.EMPTY_LIST);
 
             return ResponseEntity.ok(new MessageResponse("User Logged In", isValid, userInfoResponse));
         } catch (Exception e) {
@@ -118,11 +96,10 @@ public class ReminderController {
     }
 
     @PostMapping("/create-reminder")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> createReminder(@RequestBody ReminderCreationRequest reminderCreationRequest) {
         try {
 
-            User user = userRepository.findByUsername(reminderCreationRequest.getUserName())
+            User user = userDao.findUserByUsername(reminderCreationRequest.getUserName())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
 
@@ -132,9 +109,9 @@ public class ReminderController {
                     reminderCreationRequest.getReminderTime(),
                     reminderCreationRequest.getReminderDescription(),
                     reminderCreationRequest.getReminderToEvent());
-            reminderEntity.setUser(user);
-            reminderRepository.save(reminderEntity);
-            reminderPollingService.eventTriggeredPollExpiringReminders();
+            reminderEntity.setUserId(user.getId());
+            reminderDao.insertReminder(reminderEntity);
+            // reminderPollingService.eventTriggeredPollExpiringReminders();
             return ResponseEntity.ok(new MessageResponse("Reminder created successfully"));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -150,7 +127,6 @@ public class ReminderController {
     }
 
     @GetMapping("/retrieve-reminder")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> getUserSpecificReminder(@RequestHeader("Authorization") String authHeader) {
         try {
 
@@ -167,12 +143,12 @@ public class ReminderController {
             }
 
 
-            User user = userRepository.findByUsername(userName)
+            User user = userDao.findUserByUsername(userName)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
 
-            List<ReminderEntity> reminderEntityList = reminderRepository.findByUserId(user.getId());
-            List<ReminderEntity> activeReminders = reminderEntityList.stream().filter(reminder-> !reminder.getExpired()).collect(Collectors.toList());
+            List<ReminderEntity> reminderEntityList = reminderDao.findRemindersByUserId(user.getId());
+            List<ReminderEntity> activeReminders = reminderEntityList.stream().filter(reminder -> !reminder.getExpired()).collect(Collectors.toList());
             List<ReminderResponse> reminderResponses = activeReminders.stream().map(ReminderResponse::new).collect(Collectors.toList());
 
             return ResponseEntity.ok(reminderResponses);
@@ -190,15 +166,14 @@ public class ReminderController {
     }
 
     @PutMapping("/update-reminder")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> updateReminder(@RequestBody ReminderUpdateRequest reminderRequest) {
         try {
             logger.info("Updating Reminder:{}", reminderRequest);
 
-            ReminderEntity reminder = reminderRepository.findById(reminderRequest.getReminderId())
-                    .orElseThrow(() -> new EntityNotFoundException("Reminder not found with id: " + reminderRequest.getReminderId()));
+            ReminderEntity reminder = reminderDao.findReminderById(reminderRequest.getReminderId())
+                    .orElseThrow(() -> new ReminderNotFoundException("Reminder not found with id: " + reminderRequest.getReminderId()));
             logger.info("Reminder Retrived:{}", reminder);
-            User user = userRepository.findByUsername(reminderRequest.getUserName())
+            User user = userDao.findUserByUsername(reminderRequest.getUserName())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
             reminder.setReminderName(reminderRequest.getReminderName());
@@ -207,10 +182,10 @@ public class ReminderController {
             reminder.setReminderTime(reminderRequest.getReminderTime());
             reminder.setReminderDescription(reminderRequest.getReminderDescription());
             reminder.setReminderToEvent(reminderRequest.getReminderToEvent());
-            reminder.setUser(user);
-            reminderRepository.save(reminder);
+            reminder.setUserId(user.getId());
+            reminderDao.updateReminder(reminder);
             logger.info("Refreshing next 5 min reminders");
-            reminderPollingService.eventTriggeredPollExpiringReminders();
+           // reminderPollingService.eventTriggeredPollExpiringReminders();
             return ResponseEntity.ok(new MessageResponse("Reminder updated successfully"));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse(e.getMessage()));
@@ -223,20 +198,18 @@ public class ReminderController {
 
 
     @DeleteMapping("/delete-reminder/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteReminder(@PathVariable Integer id) {
         try {
-            logger.info("Deletingid:{}",id);
-            ReminderEntity reminder = reminderRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Reminder not found with id: " + id));
-            reminderRepository.delete(reminder);
-            reminderPollingService.eventTriggeredPollExpiringReminders();
+            logger.info("Deletingid:{}", id);
+            ReminderEntity reminder = reminderDao.findReminderById(id)
+                    .orElseThrow(() -> new ReminderNotFoundException("Reminder not found with id: " + id));
+            reminderDao.deleteReminder(reminder.getReminderId());
+           // reminderPollingService.eventTriggeredPollExpiringReminders();
             return ResponseEntity.ok(new MessageResponse("Reminder deleted successfully"));
-        } catch (EntityNotFoundException e) {
+        } catch (ReminderNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Reminder not found"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error occurred: " + e.getMessage()));
         }
     }
-
 }

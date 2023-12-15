@@ -1,21 +1,20 @@
 package org.nyu.java.project.reminderregister.security.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.nyu.java.project.reminderregister.entity.ERole;
 import org.nyu.java.project.reminderregister.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
 
     private static final long serialVersionUID = 1L;
-
 
 
     private Long id;
@@ -38,18 +37,21 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(User user) {
-        List<GrantedAuthority> authorities = user
-                .getRoles()
-                .stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-                .collect(Collectors.toList());
+//        List<GrantedAuthority> authorities = user
+//                .getRoles()
+//                .stream()
+//                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+//                .collect(Collectors.toList());
+
+        GrantedAuthority authority = new SimpleGrantedAuthority(ERole.ROLE_USER.name());
+        List<GrantedAuthority> authorityList = Collections.singletonList(authority);
 
         return new UserDetailsImpl(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
-                authorities
+                authorityList
         );
 
     }

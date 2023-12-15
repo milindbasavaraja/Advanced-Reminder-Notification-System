@@ -1,14 +1,15 @@
 package org.nyu.java.project.reminderregister.service;
 
 import com.nyu.java.Reminder;
+import org.nyu.java.project.reminderregister.dao.ReminderDao;
 import org.nyu.java.project.reminderregister.entity.ReminderEntity;
-import org.nyu.java.project.reminderregister.repository.ReminderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -22,14 +23,14 @@ public class ReminderProcessor implements CommandLineRunner {
     private final PriorityBlockingQueue<ReminderEntity> expiringReminders;
 
 
-    private final ReminderRepository reminderRepository;
+    private final ReminderDao reminderDao;
 
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public ReminderProcessor(PriorityBlockingQueue<ReminderEntity> expiringReminders, ReminderRepository reminderRepository, KafkaTemplate<String, String> kafkaTemplate) {
+    public ReminderProcessor(PriorityBlockingQueue<ReminderEntity> expiringReminders, ReminderDao reminderDao, KafkaTemplate<String, String> kafkaTemplate) {
         this.expiringReminders = expiringReminders;
-        this.reminderRepository = reminderRepository;
+        this.reminderDao = reminderDao;
         this.kafkaTemplate = kafkaTemplate;
     }
 
@@ -53,14 +54,16 @@ public class ReminderProcessor implements CommandLineRunner {
         }
     }
 
-    private void processExpiringReminders() {
+    private void processExpiringReminders() throws SQLException {
         LocalTime expirationTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
         if (!expiringReminders.isEmpty()) {
             logger.info("The times are: {}->{}:{ }", expiringReminders.peek().getReminderTime(), expirationTime, expiringReminders.peek().getReminderTime().equals(expirationTime));
         }
 
         while (!expiringReminders.isEmpty() &&
-                expiringReminders.peek().getReminderTime().isBefore(expirationTime.plusMinutes(1))) {
+                expiringReminders.peek()
+                        .getReminderTime()
+                        .isBefore(expirationTime.plusMinutes(1))) {
             ReminderEntity reminder = expiringReminders.poll();
             sendToKafka(reminder);
             updateReminderAsExpired(reminder);
@@ -81,9 +84,9 @@ public class ReminderProcessor implements CommandLineRunner {
         kafkaTemplate.send("reminder_topic", partitionKey, "key", reminder.toString());
     }
 
-    private void updateReminderAsExpired(ReminderEntity reminder) {
+    private void updateReminderAsExpired(ReminderEntity reminder) throws SQLException {
         reminder.setExpired(true);
-        reminderRepository.save(reminder);
+        reminderDao.updateReminder(reminder);
         logger.info("Updated reminder as expired: {}", reminder);
     }
 

@@ -1,7 +1,7 @@
 package org.nyu.java.project.reminderregister.service;
 
+import org.nyu.java.project.reminderregister.dao.ReminderDao;
 import org.nyu.java.project.reminderregister.entity.ReminderEntity;
-import org.nyu.java.project.reminderregister.repository.ReminderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,17 +13,20 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.PriorityBlockingQueue;
 
+
 @Service
 public class ReminderPollingService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReminderPollingService.class);
 
     private final PriorityBlockingQueue<ReminderEntity> expiringReminders;
-    private final ReminderRepository reminderRepository;
 
-    public ReminderPollingService(ReminderRepository reminderRepository,PriorityBlockingQueue<ReminderEntity> expiringReminders) {
+
+    private final ReminderDao reminderDao;
+
+    public ReminderPollingService( ReminderDao reminderDao,PriorityBlockingQueue<ReminderEntity> expiringReminders) {
         this.expiringReminders = expiringReminders;
-        this.reminderRepository = reminderRepository;
+        this.reminderDao = reminderDao;
     }
 
     public PriorityBlockingQueue<ReminderEntity> getExpiringReminders() {
@@ -47,8 +50,9 @@ public class ReminderPollingService {
             LocalDate today = LocalDate.now();
             LocalTime now = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
             LocalTime inFiveMinutes = now.plusMinutes(5);
-            List<ReminderEntity> reminders = reminderRepository
-                    .findReminderEntitiesByReminderDateAndReminderTimeBetweenAndIsExpired(today, now, inFiveMinutes, false);
+            List<ReminderEntity> reminders = reminderDao
+                    .retrieveRemindersBetweenTimes(today, now, inFiveMinutes, false);
+
             reminders.forEach(expiringReminders::offer);
             logger.info("Polling for expiring reminders");
             logger.info("The expiring reminders are:{}", expiringReminders);

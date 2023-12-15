@@ -3,16 +3,16 @@ spring:
     console:
       enabled: true
       path: /h2-console
-  datasource:
-    url: jdbc:h2:file:./data/reminderData;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE
-    driverClassName: org.h2.Driver
-    username: sa
-    password: password
-  jpa:
-    showSql: true
-    databasePlatform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddlAuto: update
+#  datasource:
+#    url: jdbc:h2:file:./data/reminderData;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE
+#    driverClassName: org.h2.Driver
+#    username: sa
+#    password: password
+#  jpa:
+#    showSql: true
+#    databasePlatform: org.hibernate.dialect.H2Dialect
+#    hibernate:
+#      ddlAuto: update
   kafka:
     bootstrapServers: pkc-p11xm.us-east-1.aws.confluent.cloud:9092
     properties:
@@ -39,14 +39,13 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
-
 server:
   port: 8888
 
 bezkoder:
   app:
     jwtSecret: ======================BezKoder=Spring===========================
-    jwtExpirationMs: 300000
+    jwtExpirationMs: 3000000
 
 
 logging:
