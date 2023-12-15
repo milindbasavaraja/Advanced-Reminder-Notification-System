@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "namespace": "com.nyu.java",
+  "name": "Reminder",
+  "doc": "Reminder Schema",
+  "fields": [
+    {
+      "name": "reminderName",
+      "type": "string",
+      "doc": "Reminder Name"
+    },
+    {
+      "name": "reminderWay",
+      "type": "string",
+      "doc": "Reminder Way"
+    },
+    {
+      "name": "reminderDate",
+      "type": "string",
+      "doc": "Reminder Date"
+    },
+    {
+      "name": "reminderTime",
+      "type": "string",
+      "doc": "Reminder Time"
+    },
+    {
+      "name": "reminderDescription",
+      "type": "string",
+      "doc": "Reminder Description"
+    },
+    {
+      "name": "reminderToEvent",
+      "type": "string",
+      "doc": "Reminder Email/Number"
+    }
+  ]
+}

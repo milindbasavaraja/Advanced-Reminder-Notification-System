@@ -1,0 +1,19 @@
+server:
+  port: 8087
+
+endpoints:
+  base-endpoint: http://localhost:8888/api
+  auth:
+    login: auth/signin
+    signup: auth/signup
+    verify-email: auth/verify-email
+    generate-otp: auth/generate-otp
+
+  test:
+    basic-url: test/user
+    validate-jwt: test/validate-jwt
+    retrieve-username: test/retrieve-username
+    create-reminder: test/create-reminder
+    retrieve-reminder: test/retrieve-reminder
+    update-reminder: test/update-reminder
+    delete-reminder: test/delete-reminder

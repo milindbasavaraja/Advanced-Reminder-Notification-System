@@ -1,0 +1,30 @@
+spring:
+  kafka:
+    bootstrapServers: pkc-p11xm.us-east-1.aws.confluent.cloud:9092
+    properties:
+      sasl:
+        mechanism: PLAIN
+        jaas:
+          config: org.apache.kafka.common.security.plain.PlainLoginModule required username='5RCXVD2ERCLBVDMD' password='7TTfxDTHgbsBDYHNsweUVfou8svtadcwMRb7xZPc+33KCpKAMu6Bhzvdpku1uaLE';
+      bootstrapServers: pkc-p11xm.us-east-1.aws.confluent.cloud:9092
+      security:
+        protocol: SASL_SSL
+      session:
+        timeout:
+          ms: 45000
+      basic:
+        auth:
+          credentials:
+            source: USER_INFO
+          user:
+            info: "{{ SR_API_KEY }}:{{ SR_API_SECRET }}"
+      schema:
+        registry:
+          url: https://psrc-lq2dm.us-east-2.aws.confluent.cloud
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+server:
+  port: 8890
+
