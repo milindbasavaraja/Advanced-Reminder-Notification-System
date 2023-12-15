@@ -4,7 +4,7 @@ import org.nyu.java.project.reminderregister.dao.ReminderDao;
 import org.nyu.java.project.reminderregister.entity.ReminderEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -15,7 +15,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 
 
 @Service
-public class ReminderPollingService {
+public class ReminderPollingService implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(ReminderPollingService.class);
 
@@ -24,7 +24,7 @@ public class ReminderPollingService {
 
     private final ReminderDao reminderDao;
 
-    public ReminderPollingService( ReminderDao reminderDao,PriorityBlockingQueue<ReminderEntity> expiringReminders) {
+    public ReminderPollingService(ReminderDao reminderDao, PriorityBlockingQueue<ReminderEntity> expiringReminders) {
         this.expiringReminders = expiringReminders;
         this.reminderDao = reminderDao;
     }
@@ -33,15 +33,29 @@ public class ReminderPollingService {
         return expiringReminders;
     }
 
-    // This is the scheduled task that runs every 5 minutes
-    @Scheduled(fixedRate = 300000)
     public void scheduledPollExpiringReminders() {
-        pollExpiringReminders();
+        while (true) {
+            pollExpiringReminders();
+            try {
+                Thread.sleep(300000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
     }
 
 
     public void eventTriggeredPollExpiringReminders() {
+
         pollExpiringReminders();
+    }
+
+    private void removeExistingReminders(List<ReminderEntity> reminders) {
+        while(!expiringReminders.isEmpty()){
+            expiringReminders.remove();
+        }
+
     }
 
 
@@ -52,14 +66,19 @@ public class ReminderPollingService {
             LocalTime inFiveMinutes = now.plusMinutes(5);
             List<ReminderEntity> reminders = reminderDao
                     .retrieveRemindersBetweenTimes(today, now, inFiveMinutes, false);
-
+            removeExistingReminders(reminders);
             reminders.forEach(expiringReminders::offer);
             logger.info("Polling for expiring reminders");
             logger.info("The expiring reminders are:{}", expiringReminders);
+
         } catch (Exception e) {
             logger.error("Error occurred while polling expiring reminders: ", e);
         }
     }
 
 
+    @Override
+    public void run(String... args) throws Exception {
+        new Thread(this::scheduledPollExpiringReminders).start();
+    }
 }

@@ -11,6 +11,7 @@ import org.nyu.java.project.reminderregister.model.response.MessageResponse;
 import org.nyu.java.project.reminderregister.model.response.ReminderResponse;
 import org.nyu.java.project.reminderregister.model.response.UserInfoResponse;
 import org.nyu.java.project.reminderregister.security.jwt.JwtUtils;
+import org.nyu.java.project.reminderregister.service.ReminderPollingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +31,8 @@ public class ReminderController {
 
     private Logger logger = LoggerFactory.getLogger(ReminderController.class);
 
-    /*@Autowired
-    private ReminderPollingService reminderPollingService;*/
+    @Autowired
+    private ReminderPollingService reminderPollingService;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -111,7 +112,7 @@ public class ReminderController {
                     reminderCreationRequest.getReminderToEvent());
             reminderEntity.setUserId(user.getId());
             reminderDao.insertReminder(reminderEntity);
-            // reminderPollingService.eventTriggeredPollExpiringReminders();
+            reminderPollingService.eventTriggeredPollExpiringReminders();
             return ResponseEntity.ok(new MessageResponse("Reminder created successfully"));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -185,7 +186,7 @@ public class ReminderController {
             reminder.setUserId(user.getId());
             reminderDao.updateReminder(reminder);
             logger.info("Refreshing next 5 min reminders");
-           // reminderPollingService.eventTriggeredPollExpiringReminders();
+            reminderPollingService.eventTriggeredPollExpiringReminders();
             return ResponseEntity.ok(new MessageResponse("Reminder updated successfully"));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse(e.getMessage()));
@@ -204,7 +205,7 @@ public class ReminderController {
             ReminderEntity reminder = reminderDao.findReminderById(id)
                     .orElseThrow(() -> new ReminderNotFoundException("Reminder not found with id: " + id));
             reminderDao.deleteReminder(reminder.getReminderId());
-           // reminderPollingService.eventTriggeredPollExpiringReminders();
+            reminderPollingService.eventTriggeredPollExpiringReminders();
             return ResponseEntity.ok(new MessageResponse("Reminder deleted successfully"));
         } catch (ReminderNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Reminder not found"));
