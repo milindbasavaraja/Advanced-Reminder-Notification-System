@@ -1,3 +1,0 @@
-2023-12-15 12:31:46 jdbc[4]: exception
-org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "USERS" not found; SQL statement:
-SELECT * FROM users WHERE username = ? [42102-200]
