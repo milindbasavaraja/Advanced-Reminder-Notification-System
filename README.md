@@ -1,16 +1,12 @@
 # Project: Three-Tiered Data System with Reminder Service
 
-## Project Team Members
 
-1. Milind Basavaraja - mb7949
-2. Raghav Sikaria - rs8082
-3. Raunak Bhupal - rb4986
 
 
 
 ## Project Statement
 
-Our project aims to develop a scalable, three-tiered data system that allows users to set and receive reminders through a basic form website interface. The service is designed to process and store reminders and notify users via SMS or Email, depending on their preference and schedule. We have aimed to build a highly-scalable backend system which can accomodate a large number of reminder requests.
+This project aims to develop a scalable, three-tiered data system that allows users to set and receive reminders through a basic form website interface. The service is designed to process and store reminders and notify users via SMS or Email, depending on their preference and schedule. I have aimed to build a highly-scalable backend system which can accomodate a large number of reminder requests.
 
 ### _Note to Professor_
 > Please note that the SMS functionality cannot be tested as we are using a `free tier` account of the Vonage API for sending messages. For message testing, a phone number must be registered with the API. Currently, only my number is registered with Vonage, so you will not be able to test this functionality. You can find its code in `ReminderListener` module
